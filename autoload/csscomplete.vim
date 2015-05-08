@@ -372,7 +372,7 @@ function! csscomplete#CompleteCSS(findstart, base)
       let values = split('hidden visible')
 
     elseif prop =~ is_multi_property
-      let values = propertiesValues[get(split(prop, '-'), 1)].VALUES[prop]
+      let values = propertiesValues[(split(prop, '-')[0])].VALUES[prop]
 
     elseif prop == 'bottom'
       let values = ['auto']
