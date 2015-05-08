@@ -249,16 +249,12 @@ function! csscomplete#getPropertiesValues()
     \}
   \}
 
-  let boxes = 'box-shadow box-sizing'
-
   let props.KEYWORDS = split('align-items '
     \.  props.animation.KEYWORDS
     \.' azimuth backface-visibility '
     \.  props.background.KEYWORDS.' '
     \.  props.border.KEYWORDS
-    \.' bottom '
-    \.  boxes
-    \.' caption-side clear clip clip-path '
+    \.' bottom box-shadow box-sizing caption-side clear clip clip-path '
     \.  props.color.KEYWORDS.' '
     \.  props.column.KEYWORDS.' '
     \.  props['column-rule'].KEYWORDS
