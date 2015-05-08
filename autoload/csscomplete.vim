@@ -1,43 +1,49 @@
 " Vim completion script
 " Based on Mikolaj Machowski's csscomplete.vim
 " Based on Chris Yip's experience version
+" Based on Christian Angermann's version
 "
 " Language: CSS 3
-" Version:  1.01
-" Maintainer: Christian Angermann
-" Last Change: 09/06/13
+" Version: 2.0
+" Maintainer: Nigel Packer
+" Last Change: 5 May 2015
 "
 
 function! csscomplete#backgroundPosition()
-  let vertical =   split('top center bottom')
+  let result = []
+
+  let vertical   = split('top center bottom')
   let horizontal = split('left center right')
   let vals = matchstr(s:line, '.*:\s*\zs.*')
 
   if vals =~ '^\%([a-zA-Z]\+\)\?$'
-    return horizontal
+    result = horizontal
   elseif vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
-    return vertical
-  else
-    return []
+    result = vertical
   endif
+
+  return result
 endfunction
 
 function! csscomplete#getMultiProperties(color, style, width)
+  let result = []
+
   let vals = matchst(s:line, '.*:\s*\zs.*')
 
   if vals =~ '^\%([a-zA-Z0-9.]\+\)\?$'
-    return split(a:width)
+    result = split(a:width)
   elseif vals =~ '^[a-zA-Z0-9.]\+\s\+\%([a-zA-Z]\+\)\?$'
-    return split(a:style)
+    result = split(a:style)
   elseif vals =~ '^[a-zA-Z0-9.]\+\s\+[a-zA-Z]\+\s\+\%([a-zA-Z(]\+\)\?$'
-    return a:color_values
-  else
-    return []
+    result = a:color_values
   endif
+
+  return result
 endfunction
 
 function! csscomplete#collectPropertyValues(property)
   let result = []
+
   let values = a:property.VALUES
 
   for key in keys(values)
@@ -181,11 +187,10 @@ function! csscomplete#getPropertiesValues()
   let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
 
   let borders = csscomplete#buildPropertySuffixes('border', split('bottom collapse color left radius right bottom-left-radius bottom-right-radius top top-left-radius top-right-radius spacing style width'))
-
-  let borders = borders .' '. csscomplete#buildPropertySuffixes('border-bottom', split('color style width'), 1)
-  let borders = borders .' '. csscomplete#buildPropertySuffixes('border-left',   split('color style width'), 1)
-  let borders = borders .' '. csscomplete#buildPropertySuffixes('border-right',  split('color style width'), 1)
-  let borders = borders .' '. csscomplete#buildPropertySuffixes('border-top',    split('color style width'), 1)
+  let borders .= ' ' . csscomplete#buildPropertySuffixes('border-bottom', split('color style width'), 1)
+  let borders .= ' ' . csscomplete#buildPropertySuffixes('border-left',   split('color style width'), 1)
+  let borders .= ' ' . csscomplete#buildPropertySuffixes('border-right',  split('color style width'), 1)
+  let borders .= ' ' . csscomplete#buildPropertySuffixes('border-top',    split('color style width'), 1)
 
   let props.border = { 'KEYWORDS': borders, 'VALUES': {} }
 
@@ -339,112 +344,159 @@ function! csscomplete#CompleteCSS(findstart, base)
   elseif borders[max(keys(borders))] == 'colon'
     " Get name of property
     let prop = tolower(matchstr(line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
-    let is_a_multiple_property = '^\%('. join( keys( propertiesValues ), '\|' ) .'\)'
+    let is_a_multiple_property = '^\%('. join(keys(propertiesValues), '\|') .'\)'
 
-    if prop == 'azimuth'
-     let values = ["left-side", "far-left", "left", "center-left", "center", "center-right", "right", "far-right", "right-side", "behind", "leftwards", "rightwards"]
+    if     prop == 'azimuth'
+      let values = split('left-side far-left left center-left center center-right right far-right right-side behind leftwards rightwards')
+
     elseif prop == 'backface-visibility'
-      let values = ["hidden", "visible"]
-   " animation, background, font, text, transition etc.
+      let values = split('hidden visible')
+
     elseif prop =~ is_a_multiple_property
       let values = propertiesValues[(split(prop, '-')[0])].VALUES[prop]
+
     elseif prop == 'bottom'
-      let values = ["auto"]
+      let values = ['auto']
+
     elseif prop == 'caption-side'
-      let values = ["top", "bottom"]
+      let values = split('top bottom')
+
     elseif prop == 'clear'
-      let values = ["none", "left", "right", "both"]
+      let values = split('none left right both')
+
     elseif prop == 'clip'
-      let values = ["auto", "rect("]
+      let values = split('auto, rect(')
+
     elseif prop == 'clip-path'
-      let values = ["none"]
+      let values = ['none']
+
     elseif prop == 'color'
       let values = propertiesValues.color.VALUES
+
     elseif prop == 'content'
-      let values = ["normal", "attr(", "open-quote", "close-quote", "no-open-quote", "no-close-quote"]
+      let values = split('normal attr( open-quote close-quote no-open-quote no-close-quote')
+
     elseif prop =~ 'counter-\%(increment\|reset\)$'
-      let values = ["none"]
+      let values = ['none']
+
     elseif prop =~ '^\%(cue-after\|cue-before\|cue\)$'
-      let values = ["url(", "none"]
+      let values = split('url( none')
+
     elseif prop == 'cursor'
-      let values = ["url(", "auto", "crosshair", "default", "pointer", "move", "e-resize", "ne-resize", "nw-resize", "n-resize", "se-resize", "sw-resize", "s-resize", "w-resize", "text", "wait", "help", "progress"]
+      let values = split('url( auto crosshair default pointer move e-resize ne-resize nw-resize n-resize se-resize sw-resize s-resize w-resize text wait help progress')
+
     elseif prop == 'direction'
-      let values = ["inherit", "ltr", "rtl"]
+      let values = split('inherit ltr rtl')
+
     elseif prop == 'display'
-      let values = ["inline", "block", "list-item", "run-in", "inline-block", "table", "inline-table", "table-row-group", "table-header-group", "table-footer-group", "table-row", "table-column-group", "table-column", "table-cell", "table-caption", "none"]
+      let values = split('inline block list-item run-in inline-block table inline-table table-row-group table-header-group table-footer-group table-row table-column-group table-column table-cell table-caption none')
+
     elseif prop == 'elevation'
-      let values = ["below", "level", "above", "higher", "lower"]
+      let values = split('below level above higher lower')
+
     elseif prop == 'empty-cells'
-      let values = ["show", "hide"]
+      let values = split('show hide')
+
     elseif prop == 'filter'
-      let values = ["url(", "blur("]
+      let values = split('url( blur(')
+
     elseif prop == 'float'
-      let values = ["left", "right", "none"]
+      let values = split('left right none')
+
     elseif prop =~ '^\%(height\|width\)$'
-      let values = ["auto"]
+      let values = ['auto']
+
     elseif prop =~ '^\%(left\|rigth\)$'
-      let values = ["auto"]
+      let values = ['auto']
+
     elseif prop == 'letter-spacing'
-      let values = ["normal"]
+      let values = ['normal']
+
     elseif prop == 'line-height'
-      let values = ["normal"]
+      let values = ['normal']
+
     elseif prop =~ '^\%(margin\|margin-\%(right\|left\|top\|bottom\)\)$'
-      let values = ["auto"]
+      let values = ['auto']
+
     elseif prop == '^\%(max\|min\)-\%(height\|width\)$'
-      let values = ["none"]
+      let values = ['none']
+
     elseif prop == 'overflow'
-      let values = ["visible", "hidden", "scroll", "auto"]
+      let values = split(visible hidden scroll auto)
+
     elseif prop =~ 'page-break-\%(after\|before\)$'
-      let values = ["auto", "always", "avoid", "left", "right"]
+      let values = splitl('auto always avoid left right')
+
     elseif prop == 'page-break-inside'
-      let values = ["auto", "avoid"]
+      let values = split('auto avoid')
+
     elseif prop == 'pitch'
-      let values = ["x-low", "low", "medium", "high", "x-high"]
+      let values = split('x-low low medium high x-high')
+
     elseif prop == 'play-during'
-      let values = ["url(", "mix", "repeat", "auto", "none"]
+      let values = split('url( mix repeat auto none')
+
     elseif prop == 'position'
-      let values = ["static", "relative", "absolute", "fixed"]
+      let values = split('static relative absolute fixed')
+
     elseif prop == 'quotes'
-      let values = ["none"]
+      let values = ['none']
+
     elseif prop == 'speak-header'
-      let values = ["once", "always"]
+      let values = split('once always')
+
     elseif prop == 'speak-numeral'
-      let values = ["digits", "continuous"]
+      let values = split('digits continuous')
+
     elseif prop == 'speak-punctuation'
-      let values = ["code", "none"]
+      let values = split('code none')
+
     elseif prop == 'speak'
-      let values = ["normal", "none", "spell-out"]
+      let values = split(normal none spell-out)
+
     elseif prop == 'speech-rate'
-      let values = ["x-slow", "slow", "medium", "fast", "x-fast", "faster", "slower"]
+      let values = split('x-slow slow medium fast x-fast faster slower')
+
     elseif prop == 'table-layout'
-      let values = ["auto", "fixed"]
+      let values = split('auto fixed')
+
     elseif prop == 'top'
-      let values = ["auto"]
+      let values = ['auto']
+
     elseif prop == 'unicode-bidi'
-      let values = ["normal", "embed", "isolate", "bidi-override", "isolate-override", "plaintext"]
+      let values = split('normal embed isolate bidi-override isolate-override plaintext')
+
     elseif prop == 'vertical-align'
-      let values = ["baseline", "sub", "super", "top", "text-top", "middle", "bottom", "text-bottom"]
+      let values = split('baseline sub super top text-top middle bottom text-bottom')
+
     elseif prop == 'visibility'
-      let values = ["visible", "hidden", "collapse"]
+      let values = split('visible hidden collapse')
+
     elseif prop == 'volume'
-      let values = ["silent", "x-soft", "soft", "medium", "loud", "x-loud"]
+      let values = split('silent x-soft soft medium loud x-loud')
+
     elseif prop == 'white-space'
-      let values = ["normal", "pre", "nowrap", "pre-wrap", "pre-line"]
+      let values = split('normal pre nowrap pre-wrap pre-line')
+
     elseif prop == 'word-spacing'
-      let values = ["normal"]
+      let values = ['normal']
+
     elseif prop == 'word-wrap'
-      let values = ["normal", 'break-word']
+      let values = split('normal break-word')
+
     elseif prop == 'z-index'
-      let values = ["auto"]
+      let values = ['auto']
+
     else
       " If no property match it is possible we are outside of {} and
       " trying to complete pseudo-(class|element)
       let element = tolower(matchstr(line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
       let tag_names = ',a,abbr,acronym,address,applet,area,article,aside,audio,b,base,basefont,bdo,big,blockquote,body,br,button,canvas,caption,center,cite,code,col,colgroup,command,datalist,dd,del,details,dfn,dir,div,dl,dt,em,embed,fieldset,font,form,figcaption,figure,footer,frame,frameset,h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,img,i,iframe,img,input,ins,isindex,kbd,keygen,label,legend,li,link,map,mark,menu,meta,meter,nav,noframes,noscript,object,ol,optgroup,option,output,p,param,pre,progress,q,rp,rt,ruby,s,samp,script,section,select,small,span,strike,strong,style,sub,summary,sup,table,tbody,td,textarea,tfoot,th,thead,time,title,tr,tt,ul,u,var,variant,video,xmp,'
+
       if stridx(tag_names, ','.element.',') > -1
         let pseudo_classes = 'active checked default disabled empty enbaled first-child first-of-type focus fullscreen hover indeterminate invalid in-rang lang last-child last-of-type link not nth-child nth-last-child nth-of-type nth-last-of-type only-child only-of-type optional out-of-rang read-only read-write required root target valid visited'
         let pseudo_elements = 'after before choices first-letter first-line repeat-item repeat-index selection value'
-        let values = split(pseudo_classes.' '.pseudo_elements)
+        let values = split(pseudo_classes . ' ' . pseudo_elements)
       else
         return []
       endif
@@ -465,8 +517,7 @@ function! csscomplete#CompleteCSS(findstart, base)
     return []
   elseif borders[max(keys(borders))] == 'exclam'
     let entered_imp = matchstr(line, '.\{-}!\s*\zs[a-zA-Z ]*$')
-
-    let values = ["important"]
+    let values = ['important']
 
     for m in values
       if m =~? '^'.entered_imp
@@ -482,7 +533,7 @@ function! csscomplete#CompleteCSS(findstart, base)
       let atrulename = matchstr(line, '.*@\zs[a-zA-Z-]\+\ze')
 
       if atrulename == 'media'
-        let values = ["screen", "tty", "tv", "projection", "handheld", "print", "braille", "aural", "all"]
+        let values = split('screen tty tv projection handheld print braille aural all')
         let entered_atruleafter = matchstr(line, '.*@media\s\+\zs.*$')
       elseif atrulename == 'import'
         let entered_atruleafter = matchstr(line, '.*@import\s\+\zs.*$')
@@ -512,7 +563,8 @@ function! csscomplete#CompleteCSS(findstart, base)
 
       return res + res2
     endif
-    let values = ["charset", "page", "media", "import", "font-face"]
+
+    let values = slit('charset page media import font-face')
     let entered_atrule = matchstr(line, '.*@\zs[a-zA-Z-]*$')
 
     for m in values
