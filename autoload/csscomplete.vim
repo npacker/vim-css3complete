@@ -69,7 +69,7 @@ function! csscomplete#getPropertiesValues()
   let common_values = {
     \'color':           split('transparent # rgb( rgba( hsl('),
     \'line-style':      split('none hidden dotted dashed solid double groove ridge inset outset'),
-    \'line-width':      split('thin thick medium')
+    \'line-width':      split('thin thick medium'),
     \'timing-function': split('ease ease-in ease-out ease-in-out linear cubic-bezier( step-start step-stop steps('),
     \'url':             split('url( none'),
   \}
