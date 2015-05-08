@@ -17,9 +17,9 @@ function! csscomplete#backgroundPosition()
   let vals = matchstr(s:line, '.*:\s*\zs.*')
 
   if vals =~ '^\%([a-zA-Z]\+\)\?$'
-    result = horizontal
+    let result = horizontal
   elseif vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
-    result = vertical
+    let result = vertical
   endif
 
   return result
@@ -31,11 +31,11 @@ function! csscomplete#getMultiProperties(color, style, width)
   let vals = matchst(s:line, '.*:\s*\zs.*')
 
   if vals =~ '^\%([a-zA-Z0-9.]\+\)\?$'
-    result = split(a:width)
+    let result = split(a:width)
   elseif vals =~ '^[a-zA-Z0-9.]\+\s\+\%([a-zA-Z]\+\)\?$'
-    result = split(a:style)
+    let result = split(a:style)
   elseif vals =~ '^[a-zA-Z0-9.]\+\s\+[a-zA-Z]\+\s\+\%([a-zA-Z(]\+\)\?$'
-    result = a:color_values
+    let result = a:color_values
   endif
 
   return result
