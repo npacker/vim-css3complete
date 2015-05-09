@@ -239,9 +239,9 @@ function! csscomplete#getPropertiesValues()
   let props[prop_name] = {
     \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('image position type'), 1),
     \'VALUES': {
-      \'list-style-image':    common_values['url'],
-      \'list-style-position': split('inside outside'),
-      \'list-style-type':     split('disc circle square decimal decimal-leading-zero lower-roman upper-roman lower-latin upper-latin none')
+      \prop_name.'-image':    common_values['url'],
+      \prop_name.'-position': split('inside outside'),
+      \prop_name.'-type':     split('disc circle square decimal decimal-leading-zero lower-roman upper-roman lower-latin upper-latin none')
     \}
   \}
   let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
@@ -289,7 +289,8 @@ function! csscomplete#getPropertiesValues()
     \}
   \}
 
-  let props.KEYWORDS = split('align-items '
+  let props.KEYWORDS = split(
+    \'  align-items '
     \.  props.animation.KEYWORDS
     \.' azimuth backface-visibility '
     \.  props.background.KEYWORDS.' '
@@ -348,47 +349,38 @@ function csscomplete#getLastSymbol(line)
 
   if openbrace > -1
     let found[openbrace]  = s:SYMBOLS.OPEN_BRACE.NAME
-    echoerr '{'
   endif
 
   if closebrace > -1
     let found[closebrace] = s:SYMBOLS.CLOSE_BRACE.NAME
-    echoerr '}'
   endif
 
   if colon > -1
     let found[colon]      = s:SYMBOLS.COLON.NAME
-    echoerr ':'
   endif
 
   if semicolon > -1
     let found[semicolon]  = s:SYMBOLS.SEMI_COLON.NAME
-    echoerr ';'
   endif
 
   if opencomm > -1
     let found[opencomm]   = s:SYMBOLS.OPEN_COMMNET.NAME
-    echoerr '/*'
   endif
 
   if closecomm > -1
     let found[closecomm]  = s:SYMBOLS.CLOSE_COMMENT.NAME
-    echoerr '*/'
   endif
 
   if style > -1
     let found[style]      = s:SYMBOLS.STYLE.NAME
-    echoerr 'style'
   endif
 
   if atrule > -1
     let found[atrule]     = s:SYMBOLS.AMPERSAND.NAME
-    echoerr '@'
   endif
 
   if bang > -1
     let found[bang]       = s:SYMBOLS.BANG.NAME
-    echoerr '!'
   endif
 
   return get(found, max(keys(found)), '')
@@ -437,11 +429,11 @@ function! csscomplete#CompleteCSS(findstart, base)
     let s:line = a:base
   endif
 
-  let line           = s:line
-  let last_symbol    = csscomplete#getLastSymbol(line)
-  let result         = []
-  let result1        = []
-  let result2        = []
+  let line        = s:line
+  let last_symbol = csscomplete#getLastSymbol(line)
+  let result      = []
+  let result1     = []
+  let result2     = []
 
   let properties_values = csscomplete#getPropertiesValues()
   let KEYWORDS          = properties_values.KEYWORDS
@@ -615,7 +607,7 @@ function! csscomplete#CompleteCSS(findstart, base)
     let entered_value = matchstr(line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
 
     for m in values
-      if m =~? '^'.entered_value
+      if m =~? '^' . entered_value
         call add(result1, m)
       elseif m =~? entered_value
         call add(result2, m)
@@ -630,7 +622,7 @@ function! csscomplete#CompleteCSS(findstart, base)
     let values            = ['important']
 
     for m in values
-      if m =~? '^'.entered_important
+      if m =~? '^' . entered_important
         call add(result1, m)
       endif
     endfor
