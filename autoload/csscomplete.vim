@@ -9,6 +9,46 @@
 " Last Change: 5 May 2015
 "
 
+" Constants
+let s:SYMBOLS = {
+  \'OPEN_BRACE': {
+    \'NAME':   'open_brace',
+    \'SYMBOL': '{'
+  \},
+  \'CLOSE_BRACE': {
+    \'NAME':   'close_brace',
+    \'SYMBOL': '}'
+  \},
+  \'OPEN_COMMENT': {
+    \'NAME':   'open_comment',
+    \'SYMBOL': '/*'
+  \},
+  \'CLOSE_COMMENT': {
+    \'NAME':   'close_comment',
+    \'SYMBOL': '*/'
+  \},
+  \'COLON': {
+    \'NAME':   'colon',
+    \'SYMBOL': ':'
+  \},
+  \'SEMI_COLON': {
+    \'NAME':   'semi_colon',
+    \'SYMBOL': ';'
+  \},
+  \'AMPERSAND': {
+    \'NAME':   'ampersand',
+    \'SYMBOL': '@'
+  \},
+  \'BANG': {
+    \'NAME':   'bang',
+    \'SYMBOL': '!'
+  \},
+  \'STYLE': {
+    \'NAME':   'style',
+    \'SYMBOL': 'style\s*='
+  \}
+\}
+
 function! csscomplete#backgroundPosition()
   let result = []
 
@@ -54,7 +94,7 @@ function! csscomplete#collectPropertyValues(property)
 endfunction
 
 function! csscomplete#getPropertyPrefix(property_name)
-  return get(split(property_name, '-'), 1)
+  return get(split(a:property_name, '-'), 0)
 endfunction
 
 function! csscomplete#buildPropertySuffixes(property_name, suffixes, ...)
@@ -288,9 +328,89 @@ function! csscomplete#findStart()
     let start -= 1
   endwhile
 
-  let b:complete_context = s:line[0:complete_begin]
+  let b:context = s:line[0:complete_begin]
 
   return start
+endfunction
+
+function csscomplete#getLastSymbol(line)
+  let found      = {}
+
+  let openbrace  = strridx(a:line, s:SYMBOLS.OPEN_BRACE.SYMBOL)
+  let closebrace = strridx(a:line, s:SYMBOLS.CLOSE_BRACE.SYMBOL)
+  let colon      = strridx(a:line, s:SYMBOLS.COLON.SYMBOL)
+  let semicolon  = strridx(a:line, s:SYMBOLS.SEMI_COLON.SYMBOL)
+  let opencomm   = strridx(a:line, s:SYMBOLS.OPEN_COMMENT.SYMBOL)
+  let closecomm  = strridx(a:line, s:SYMBOLS.CLOSE_COMMENT.SYMBOL)
+  let style      = strridx(a:line, s:SYMBOLS.STYLE.SYMBOL)
+  let atrule     = strridx(a:line, s:SYMBOLS.AMPERSAND.SYMBOL)
+  let bang       = strridx(a:line, s:SYMBOLS.BANG.SYMBOL)
+
+  if openbrace > -1
+    let found[openbrace]  = s:SYMBOLS.OPEN_BRACE.NAME
+    echoerr '{'
+  endif
+
+  if closebrace > -1
+    let found[closebrace] = s:SYMBOLS.CLOSE_BRACE.NAME
+    echoerr '}'
+  endif
+
+  if colon > -1
+    let found[colon]      = s:SYMBOLS.COLON.NAME
+    echoerr ':'
+  endif
+
+  if semicolon > -1
+    let found[semicolon]  = s:SYMBOLS.SEMI_COLON.NAME
+    echoerr ';'
+  endif
+
+  if opencomm > -1
+    let found[opencomm]   = s:SYMBOLS.OPEN_COMMNET.NAME
+    echoerr '/*'
+  endif
+
+  if closecomm > -1
+    let found[closecomm]  = s:SYMBOLS.CLOSE_COMMENT.NAME
+    echoerr '*/'
+  endif
+
+  if style > -1
+    let found[style]      = s:SYMBOLS.STYLE.NAME
+    echoerr 'style'
+  endif
+
+  if atrule > -1
+    let found[atrule]     = s:SYMBOLS.AMPERSAND.NAME
+    echoerr '@'
+  endif
+
+  if bang > -1
+    let found[bang]       = s:SYMBOLS.BANG.NAME
+    echoerr '!'
+  endif
+
+  return get(found, max(keys(found)), '')
+endfunction
+
+function! csscomplete#completeProperty(property, keywords)
+  let result1 = []
+  let result2 = []
+
+  for k in a:keywords
+      if k =~? '^' . a:property
+        call add(result1, k . ': ')
+      elseif k =~? a:property
+        call add(result2, k . ': ')
+      endif
+  endfor
+
+  return result1 + result2
+endfunction
+
+function! csscomplete#completeValue(property)
+
 endfunction
 
 function! csscomplete#CompleteCSS(findstart, base)
@@ -310,224 +430,171 @@ function! csscomplete#CompleteCSS(findstart, base)
   "   as 1.
   " 5. if @ complete at-rule
   " 6. if ! complete important
-  if exists("b:compl_context")
-    let s:line = b:compl_context
-    unlet! b:compl_context
+  if exists("b:context")
+    let s:line = b:context
+    unlet! b:context
   else
     let s:line = a:base
   endif
 
-  let line       = s:line
-  let result1    = []
-  let result2    = []
-  let delimiters = {}
+  let line           = s:line
+  let last_symbol    = csscomplete#getLastSymbol(line)
+  let result         = []
+  let result1        = []
+  let result2        = []
 
-  let propertiesValues = csscomplete#getPropertiesValues()
-  let KEYWORDS         = propertiesValues.KEYWORDS
+  let properties_values = csscomplete#getPropertiesValues()
+  let KEYWORDS          = properties_values.KEYWORDS
 
-  " Check last occurrence of sequence
-  let openbrace  = strridx(line, '{')
-  let closebrace = strridx(line, '}')
-  let colon      = strridx(line, ':')
-  let semicolon  = strridx(line, ';')
-  let opencomm   = strridx(line, '/*')
-  let closecomm  = strridx(line, '*/')
-  let style      = strridx(line, 'style\s*=')
-  let atrule     = strridx(line, '@')
-  let bang       = strridx(line, '!')
+  if empty(last_symbol) || last_symbol =~ '^\%(' . join([s:SYMBOLS.OPEN_BRACE.NAME, s:SYMBOLS.SEMI_COLON.NAME, s:SYMBOLS.OPEN_COMMENT.NAME, s:SYMBOLS.CLOSE_COMMENT.NAME, s:SYMBOLS.STYLE.NAME], '\|') . '\)$'
+    let property = matchstr(line, '.\{-}\zs[a-zA-Z-]*$')
+    let result   = csscomplete#completeProperty(property, KEYWORDS)
 
-  if openbrace > -1
-    let delimiters[openbrace]  = "openbrace"
-  endif
+    return result
+  elseif last_symbol == s:SYMBOLS.COLON.NAME
+    let property          = tolower(matchstr(line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
+    let is_multi_property = '^\%('. join(keys(properties_values), '\|') .'\)'
 
-  if closebrace > -1
-    let delimiters[closebrace] = "closebrace"
-  endif
+    if property =~ is_multi_property
+      let prefix = csscomplete#getPropertyPrefix(property)
+      let values = properties_values[prefix].VALUES[property]
 
-  if colon > -1
-    let delimiters[colon]      = "colon"
-  endif
-
-  if semicolon > -1
-    let delimiters[semicolon]  = "semicolon"
-  endif
-
-  if opencomm > -1
-    let delimiters[opencomm]   = "opencomm"
-  endif
-
-  if closecomm > -1
-    let delimiters[closecomm]  = "closecomm"
-  endif
-
-  if style > -1
-    let delimiters[style]      = "style"
-  endif
-
-  if atrule > -1
-    let delimiters[atrule]     = "atrule"
-  endif
-
-  if bang > -1
-    let delimiters[bang]       = "bang"
-  endif
-
-  if len(delimiters) == 0 || delimiters[max(keys(delimiters))] =~ '^\%(openbrace\|semicolon\|opencomm\|closecomm\|style\)$'
-    let entered_property = matchstr(line, '.\{-}\zs[a-zA-Z-]*$')
-
-    for m in KEYWORDS
-      if m =~? '^' . entered_property
-        call add(result1, m . ': ')
-      elseif m =~? entered_property
-        call add(result2, m . ': ')
-      endif
-    endfor
-
-    return result1 + result2
-  elseif delimiters[max(keys(delimiters))] == 'colon'
-    " Get name of property
-    let prop              = tolower(matchstr(line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
-    let is_multi_property = '^\%('. join(keys(propertiesValues), '\|') .'\)'
-
-    if     prop == 'azimuth'
+    elseif property == 'azimuth'
       let values = split('left-side far-left left center-left center center-right right far-right right-side behind leftwards rightwards')
 
-    elseif prop == 'backface-visibility'
+    elseif property == 'backface-visibility'
       let values = split('hidden visible')
 
-    elseif prop =~ is_multi_property
-      let values = propertiesValues[(csscomplete#getPropertyPrefix())].VALUES[prop]
-
-    elseif prop == 'bottom'
+    elseif property == 'bottom'
       let values = ['auto']
 
-    elseif prop == 'caption-side'
+    elseif property == 'caption-side'
       let values = split('top bottom')
 
-    elseif prop == 'clear'
+    elseif property == 'clear'
       let values = split('none left right both')
 
-    elseif prop == 'clip'
+    elseif property == 'clip'
       let values = split('auto, rect(')
 
-    elseif prop == 'clip-path'
+    elseif property == 'clip-path'
       let values = ['none']
 
-    elseif prop == 'color'
-      let values = propertiesValues.color.VALUES
+    elseif property == 'color'
+      let values = properties_values.color.VALUES
 
-    elseif prop == 'content'
+    elseif property == 'content'
       let values = split('normal attr( open-quote close-quote no-open-quote no-close-quote')
 
-    elseif prop =~ 'counter-\%(increment\|reset\)$'
+    elseif property =~ 'counter-\%(increment\|reset\)$'
       let values = ['none']
 
-    elseif prop =~ '^\%(cue-after\|cue-before\|cue\)$'
+    elseif property =~ '^\%(cue-after\|cue-before\|cue\)$'
       let values = split('url( none')
 
-    elseif prop == 'cursor'
+    elseif property == 'cursor'
       let values = split('url( auto crosshair default pointer move e-resize ne-resize nw-resize n-resize se-resize sw-resize s-resize w-resize text wait help progress')
 
-    elseif prop == 'direction'
+    elseif property == 'direction'
       let values = split('inherit ltr rtl')
 
-    elseif prop == 'display'
+    elseif property == 'display'
       let values = split('inline block list-item run-in inline-block table inline-table table-row-group table-header-group table-footer-group table-row table-column-group table-column table-cell table-caption none')
 
-    elseif prop == 'elevation'
+    elseif property == 'elevation'
       let values = split('below level above higher lower')
 
-    elseif prop == 'empty-cells'
+    elseif property == 'empty-cells'
       let values = split('show hide')
 
-    elseif prop == 'filter'
+    elseif property == 'filter'
       let values = split('url( blur(')
 
-    elseif prop == 'float'
+    elseif property == 'float'
       let values = split('left right none')
 
-    elseif prop =~ '^\%(height\|width\)$'
+    elseif property =~ '^\%(height\|width\)$'
       let values = ['auto']
 
-    elseif prop =~ '^\%(left\|rigth\)$'
+    elseif property =~ '^\%(left\|rigth\)$'
       let values = ['auto']
 
-    elseif prop == 'letter-spacing'
+    elseif property == 'letter-spacing'
       let values = ['normal']
 
-    elseif prop == 'line-height'
+    elseif property == 'line-height'
       let values = ['normal']
 
-    elseif prop =~ '^\%(margin\|margin-\%(right\|left\|top\|bottom\)\)$'
+    elseif property =~ '^\%(margin\|margin-\%(right\|left\|top\|bottom\)\)$'
       let values = ['auto']
 
-    elseif prop == '^\%(max\|min\)-\%(height\|width\)$'
+    elseif property == '^\%(max\|min\)-\%(height\|width\)$'
       let values = ['none']
 
-    elseif prop == 'overflow'
+    elseif property == 'overflow'
       let values = split('visible hidden scroll auto')
 
-    elseif prop =~ 'page-break-\%(after\|before\)$'
+    elseif property =~ 'page-break-\%(after\|before\)$'
       let values = splitl('auto always avoid left right')
 
-    elseif prop == 'page-break-inside'
+    elseif property == 'page-break-inside'
       let values = split('auto avoid')
 
-    elseif prop == 'pitch'
+    elseif property == 'pitch'
       let values = split('x-low low medium high x-high')
 
-    elseif prop == 'play-during'
+    elseif property == 'play-during'
       let values = split('url( mix repeat auto none')
 
-    elseif prop == 'position'
+    elseif property == 'position'
       let values = split('static relative absolute fixed')
 
-    elseif prop == 'quotes'
+    elseif property == 'quotes'
       let values = ['none']
 
-    elseif prop == 'speak-header'
+    elseif property == 'speak-header'
       let values = split('once always')
 
-    elseif prop == 'speak-numeral'
+    elseif property == 'speak-numeral'
       let values = split('digits continuous')
 
-    elseif prop == 'speak-punctuation'
+    elseif property == 'speak-punctuation'
       let values = split('code none')
 
-    elseif prop == 'speak'
+    elseif property == 'speak'
       let values = split('normal none spell-out')
 
-    elseif prop == 'speech-rate'
+    elseif property == 'speech-rate'
       let values = split('x-slow slow medium fast x-fast faster slower')
 
-    elseif prop == 'table-layout'
+    elseif property == 'table-layout'
       let values = split('auto fixed')
 
-    elseif prop == 'top'
+    elseif property == 'top'
       let values = ['auto']
 
-    elseif prop == 'unicode-bidi'
+    elseif property == 'unicode-bidi'
       let values = split('normal embed isolate bidi-override isolate-override plaintext')
 
-    elseif prop == 'vertical-align'
+    elseif property == 'vertical-align'
       let values = split('baseline sub super top text-top middle bottom text-bottom')
 
-    elseif prop == 'visibility'
+    elseif property == 'visibility'
       let values = split('visible hidden collapse')
 
-    elseif prop == 'volume'
+    elseif property == 'volume'
       let values = split('silent x-soft soft medium loud x-loud')
 
-    elseif prop == 'white-space'
+    elseif property == 'white-space'
       let values = split('normal pre nowrap pre-wrap pre-line')
 
-    elseif prop == 'word-spacing'
+    elseif property == 'word-spacing'
       let values = ['normal']
 
-    elseif prop == 'word-wrap'
+    elseif property == 'word-wrap'
       let values = split('normal break-word')
 
-    elseif prop == 'z-index'
+    elseif property == 'z-index'
       let values = ['auto']
 
     else
@@ -556,9 +623,9 @@ function! csscomplete#CompleteCSS(findstart, base)
     endfor
 
     return result1 + result2
-  elseif delimiters[max(keys(delimiters))] == 'closebrace'
+  elseif last_symbol == s:SYMBOLS.CLOSE_BRACE.NAME
     return []
-  elseif delimiters[max(keys(delimiters))] == 'bang'
+  elseif last_symbol == s:SYMBOLS.BANG.NAME
     let entered_important = matchstr(line, '.\{-}!\s*\zs[a-zA-Z ]*$')
     let values            = ['important']
 
@@ -569,24 +636,24 @@ function! csscomplete#CompleteCSS(findstart, base)
     endfor
 
     return result1
-  elseif delimiters[max(keys(delimiters))] == 'atrule'
-    let afterat = matchstr(line, '.*@\zs.*')
+  elseif last_symbol == s:SYMBOLS.AMPERSAND.NAME
+    let after_at = matchstr(line, '.*@\zs.*')
 
-    if afterat =~ '\s'
-      let atrulename = matchstr(line, '.*@\zs[a-zA-Z-]\+\ze')
+    if after_at =~ '\s'
+      let atrule_name = matchstr(line, '.*@\zs[a-zA-Z-]\+\ze')
 
-      if atrulename == 'media'
-        let entered_atruleafter = matchstr(line, '.*@media\s\+\zs.*$')
+      if atrule_name == 'media'
+        let atrule_after = matchstr(line, '.*@media\s\+\zs.*$')
         let values              = split('screen tty tv projection handheld print braille aural all')
-      elseif atrulename == 'import'
-        let entered_atruleafter = matchstr(line, '.*@import\s\+\zs.*$')
+      elseif atrule_name == 'import'
+        let atrule_after = matchstr(line, '.*@import\s\+\zs.*$')
 
-        if entered_atruleafter =~ "^[\"']"
-          let filestart = matchstr(entered_atruleafter, '^.\zs.*')
+        if atrule_after =~ "^[\"']"
+          let filestart = matchstr(atrule_after, '^.\zs.*')
           let files     = split(glob(filestart.'*'), '\n')
           let values    = map(copy(files), '"\"".v:val')
-        elseif entered_atruleafter =~ "^url("
-          let filestart = matchstr(entered_atruleafter, "^url([\"']\\?\\zs.*")
+        elseif atrule_after =~ "^url("
+          let filestart = matchstr(atrule_after, "^url([\"']\\?\\zs.*")
           let files     = split(glob(filestart.'*'), '\n')
           let values    = map(copy(files), '"url(".v:val')
         else
@@ -597,28 +664,28 @@ function! csscomplete#CompleteCSS(findstart, base)
       endif
 
       for m in values
-        if m =~? '^' . entered_atruleafter
+        if m =~? '^' . atrule_after
           call add(result1, m)
-        elseif m =~? entered_atruleafter
+        elseif m =~? atrule_after
           call add(result2, m)
         endif
       endfor
 
       return result1 + result2
+    else
+      let values = split('charset page media import font-face')
+      let atrule = matchstr(line, '.*@\zs[a-zA-Z-]*$')
+
+      for m in values
+        if m =~? '^' . atrule
+          call add(result1, m . ' ')
+        elseif m =~? atrule
+          call add(result2, m . ' ')
+        endif
+      endfor
+
+      return result1 + result2
     endif
-
-    let values         = split('charset page media import font-face')
-    let entered_atrule = matchstr(line, '.*@\zs[a-zA-Z-]*$')
-
-    for m in values
-      if m =~? '^' . entered_atrule
-        call add(result1, m . ' ')
-      elseif m =~? entered_atrule
-        call add(result2, m . ' ')
-      endif
-    endfor
-
-    return result1 + result2
   endif
 
   return []
