@@ -11,42 +11,15 @@
 
 " Constants
 let s:SYMBOLS = {
-  \'OPEN_BRACE': {
-    \'NAME':   'open_brace',
-    \'SYMBOL': '{'
-  \},
-  \'CLOSE_BRACE': {
-    \'NAME':   'close_brace',
-    \'SYMBOL': '}'
-  \},
-  \'OPEN_COMMENT': {
-    \'NAME':   'open_comment',
-    \'SYMBOL': '/*'
-  \},
-  \'CLOSE_COMMENT': {
-    \'NAME':   'close_comment',
-    \'SYMBOL': '*/'
-  \},
-  \'COLON': {
-    \'NAME':   'colon',
-    \'SYMBOL': ':'
-  \},
-  \'SEMI_COLON': {
-    \'NAME':   'semi_colon',
-    \'SYMBOL': ';'
-  \},
-  \'AMPERSAND': {
-    \'NAME':   'ampersand',
-    \'SYMBOL': '@'
-  \},
-  \'BANG': {
-    \'NAME':   'bang',
-    \'SYMBOL': '!'
-  \},
-  \'STYLE': {
-    \'NAME':   'style',
-    \'SYMBOL': 'style\s*='
-  \}
+  \'OPEN_BRACE': '{',
+  \'CLOSE_BRACE': '}',
+  \'OPEN_COMMENT': '/*',
+  \'CLOSE_COMMENT': '*/',
+  \'COLON': ':',
+  \'SEMI_COLON': ';',
+  \'AMPERSAND': '@',
+  \'BANG': '!',
+  \'STYLE': 'style\s*='
 \}
 
 function! csscomplete#backgroundPosition()
@@ -308,9 +281,7 @@ function! csscomplete#getPropertiesValues()
     \.  props.outline.KEYWORDS
     \.' overflow overflow-x overflow-y '
     \.  props.padding.KEYWORDS
-    \.' page-break-after page-break-before page-break-inside pause pause-after pause-before '
-    \.' pitch pitch-range play-during pointer-events position quotes resize right richness '
-    \.' speak speak-header speak-numeral speak-punctuation speech-rate stress table-layout '
+    \.' page-break-after page-break-before page-break-inside pause pause-after pause-before pitch pitch-range play-during pointer-events position quotes resize right richness speak speak-header speak-numeral speak-punctuation speech-rate stress table-layout '
     \.  props.text.KEYWORDS
     \.' top transform transform-origin '
     \.  props.transition.KEYWORDS
@@ -337,50 +308,50 @@ endfunction
 function csscomplete#getLastSymbol(line)
   let found      = {}
 
-  let openbrace  = strridx(a:line, s:SYMBOLS.OPEN_BRACE.SYMBOL)
-  let closebrace = strridx(a:line, s:SYMBOLS.CLOSE_BRACE.SYMBOL)
-  let colon      = strridx(a:line, s:SYMBOLS.COLON.SYMBOL)
-  let semicolon  = strridx(a:line, s:SYMBOLS.SEMI_COLON.SYMBOL)
-  let opencomm   = strridx(a:line, s:SYMBOLS.OPEN_COMMENT.SYMBOL)
-  let closecomm  = strridx(a:line, s:SYMBOLS.CLOSE_COMMENT.SYMBOL)
-  let style      = strridx(a:line, s:SYMBOLS.STYLE.SYMBOL)
-  let atrule     = strridx(a:line, s:SYMBOLS.AMPERSAND.SYMBOL)
-  let bang       = strridx(a:line, s:SYMBOLS.BANG.SYMBOL)
+  let openbrace  = strridx(a:line, s:SYMBOLS.OPEN_BRACE)
+  let closebrace = strridx(a:line, s:SYMBOLS.CLOSE_BRACE)
+  let colon      = strridx(a:line, s:SYMBOLS.COLON)
+  let semicolon  = strridx(a:line, s:SYMBOLS.SEMI_COLON)
+  let opencomm   = strridx(a:line, s:SYMBOLS.OPEN_COMMENT)
+  let closecomm  = strridx(a:line, s:SYMBOLS.CLOSE_COMMENT)
+  let style      = strridx(a:line, s:SYMBOLS.STYLE)
+  let ampersand  = strridx(a:line, s:SYMBOLS.AMPERSAND)
+  let bang       = strridx(a:line, s:SYMBOLS.BANG)
 
   if openbrace > -1
-    let found[openbrace]  = s:SYMBOLS.OPEN_BRACE.NAME
+    let found[openbrace]  = s:SYMBOLS.OPEN_BRACE
   endif
 
   if closebrace > -1
-    let found[closebrace] = s:SYMBOLS.CLOSE_BRACE.NAME
+    let found[closebrace] = s:SYMBOLS.CLOSE_BRACE
   endif
 
   if colon > -1
-    let found[colon]      = s:SYMBOLS.COLON.NAME
+    let found[colon]      = s:SYMBOLS.COLON
   endif
 
   if semicolon > -1
-    let found[semicolon]  = s:SYMBOLS.SEMI_COLON.NAME
+    let found[semicolon]  = s:SYMBOLS.SEMI_COLON
   endif
 
   if opencomm > -1
-    let found[opencomm]   = s:SYMBOLS.OPEN_COMMNET.NAME
+    let found[opencomm]   = s:SYMBOLS.OPEN_COMMNET
   endif
 
   if closecomm > -1
-    let found[closecomm]  = s:SYMBOLS.CLOSE_COMMENT.NAME
+    let found[closecomm]  = s:SYMBOLS.CLOSE_COMMENT
   endif
 
   if style > -1
-    let found[style]      = s:SYMBOLS.STYLE.NAME
+    let found[style]      = s:SYMBOLS.STYLE
   endif
 
-  if atrule > -1
-    let found[atrule]     = s:SYMBOLS.AMPERSAND.NAME
+  if ampersand > -1
+    let found[ampersand]  = s:SYMBOLS.AMPERSAND
   endif
 
   if bang > -1
-    let found[bang]       = s:SYMBOLS.BANG.NAME
+    let found[bang]       = s:SYMBOLS.BANG
   endif
 
   return get(found, max(keys(found)), '')
@@ -438,160 +409,112 @@ function! csscomplete#CompleteCSS(findstart, base)
   let properties_values = csscomplete#getPropertiesValues()
   let KEYWORDS          = properties_values.KEYWORDS
 
-  if empty(last_symbol) || last_symbol =~ '^\%(' . join([s:SYMBOLS.OPEN_BRACE.NAME, s:SYMBOLS.SEMI_COLON.NAME, s:SYMBOLS.OPEN_COMMENT.NAME, s:SYMBOLS.CLOSE_COMMENT.NAME, s:SYMBOLS.STYLE.NAME], '\|') . '\)$'
+  if empty(last_symbol) || last_symbol =~ '^\%(' . join([s:SYMBOLS.OPEN_BRACE, s:SYMBOLS.SEMI_COLON, s:SYMBOLS.OPEN_COMMENT, s:SYMBOLS.CLOSE_COMMENT, s:SYMBOLS.STYLE], '\|') . '\)$'
     let property = matchstr(line, '.\{-}\zs[a-zA-Z-]*$')
     let result   = csscomplete#completeProperty(property, KEYWORDS)
-
-    return result
-  elseif last_symbol == s:SYMBOLS.COLON.NAME
+  elseif last_symbol == s:SYMBOLS.COLON
+    let entered_value     = matchstr(line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
     let property          = tolower(matchstr(line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
     let is_multi_property = '^\%('. join(keys(properties_values), '\|') .'\)'
 
     if property =~ is_multi_property
       let prefix = csscomplete#getPropertyPrefix(property)
       let values = properties_values[prefix].VALUES[property]
-
     elseif property == 'azimuth'
       let values = split('left-side far-left left center-left center center-right right far-right right-side behind leftwards rightwards')
-
     elseif property == 'backface-visibility'
       let values = split('hidden visible')
-
     elseif property == 'bottom'
       let values = ['auto']
-
     elseif property == 'caption-side'
       let values = split('top bottom')
-
     elseif property == 'clear'
       let values = split('none left right both')
-
     elseif property == 'clip'
       let values = split('auto, rect(')
-
     elseif property == 'clip-path'
       let values = ['none']
-
     elseif property == 'color'
       let values = properties_values.color.VALUES
-
     elseif property == 'content'
       let values = split('normal attr( open-quote close-quote no-open-quote no-close-quote')
-
     elseif property =~ 'counter-\%(increment\|reset\)$'
       let values = ['none']
-
     elseif property =~ '^\%(cue-after\|cue-before\|cue\)$'
       let values = split('url( none')
-
     elseif property == 'cursor'
       let values = split('url( auto crosshair default pointer move e-resize ne-resize nw-resize n-resize se-resize sw-resize s-resize w-resize text wait help progress')
-
     elseif property == 'direction'
       let values = split('inherit ltr rtl')
-
     elseif property == 'display'
       let values = split('inline block list-item run-in inline-block table inline-table table-row-group table-header-group table-footer-group table-row table-column-group table-column table-cell table-caption none')
-
     elseif property == 'elevation'
       let values = split('below level above higher lower')
-
     elseif property == 'empty-cells'
       let values = split('show hide')
-
     elseif property == 'filter'
       let values = split('url( blur(')
-
     elseif property == 'float'
       let values = split('left right none')
-
     elseif property =~ '^\%(height\|width\)$'
       let values = ['auto']
-
     elseif property =~ '^\%(left\|rigth\)$'
       let values = ['auto']
-
     elseif property == 'letter-spacing'
       let values = ['normal']
-
     elseif property == 'line-height'
       let values = ['normal']
-
     elseif property =~ '^\%(margin\|margin-\%(right\|left\|top\|bottom\)\)$'
       let values = ['auto']
-
     elseif property == '^\%(max\|min\)-\%(height\|width\)$'
       let values = ['none']
-
     elseif property == 'overflow'
       let values = split('visible hidden scroll auto')
-
     elseif property =~ 'page-break-\%(after\|before\)$'
       let values = splitl('auto always avoid left right')
-
     elseif property == 'page-break-inside'
       let values = split('auto avoid')
-
     elseif property == 'pitch'
       let values = split('x-low low medium high x-high')
-
     elseif property == 'play-during'
       let values = split('url( mix repeat auto none')
-
     elseif property == 'position'
       let values = split('static relative absolute fixed')
-
     elseif property == 'quotes'
       let values = ['none']
-
     elseif property == 'speak-header'
       let values = split('once always')
-
     elseif property == 'speak-numeral'
       let values = split('digits continuous')
-
     elseif property == 'speak-punctuation'
       let values = split('code none')
-
     elseif property == 'speak'
       let values = split('normal none spell-out')
-
     elseif property == 'speech-rate'
       let values = split('x-slow slow medium fast x-fast faster slower')
-
     elseif property == 'table-layout'
       let values = split('auto fixed')
-
     elseif property == 'top'
       let values = ['auto']
-
     elseif property == 'unicode-bidi'
       let values = split('normal embed isolate bidi-override isolate-override plaintext')
-
     elseif property == 'vertical-align'
       let values = split('baseline sub super top text-top middle bottom text-bottom')
-
     elseif property == 'visibility'
       let values = split('visible hidden collapse')
-
     elseif property == 'volume'
       let values = split('silent x-soft soft medium loud x-loud')
-
     elseif property == 'white-space'
       let values = split('normal pre nowrap pre-wrap pre-line')
-
     elseif property == 'word-spacing'
       let values = ['normal']
-
     elseif property == 'word-wrap'
       let values = split('normal break-word')
-
     elseif property == 'z-index'
       let values = ['auto']
-
     else
-      " If no property match it is possible we are outside of {} and
-      " trying to complete pseudo-(class|element)
+      " If no property match it is possible we are outside of {} and trying to
+      " complete pseudo-(class|element)
       let element   = tolower(matchstr(line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
       let tag_names = ',a,abbr,acronym,address,applet,area,article,aside,audio,b,base,basefont,bdo,big,blockquote,body,br,button,canvas,caption,center,cite,code,col,colgroup,command,datalist,dd,del,details,dfn,dir,div,dl,dt,em,embed,fieldset,font,form,figcaption,figure,footer,frame,frameset,h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,img,i,iframe,img,input,ins,isindex,kbd,keygen,label,legend,li,link,map,mark,menu,meta,meter,nav,noframes,noscript,object,ol,optgroup,option,output,p,param,pre,progress,q,rp,rt,ruby,s,samp,script,section,select,small,span,strike,strong,style,sub,summary,sup,table,tbody,td,textarea,tfoot,th,thead,time,title,tr,tt,ul,u,var,variant,video,xmp,'
 
@@ -599,12 +522,8 @@ function! csscomplete#CompleteCSS(findstart, base)
         let pseudo_classes  = 'active checked default disabled empty enbaled first-child first-of-type focus fullscreen hover indeterminate invalid in-rang lang last-child last-of-type link not nth-child nth-last-child nth-of-type nth-last-of-type only-child only-of-type optional out-of-rang read-only read-write required root target valid visited'
         let pseudo_elements = 'after before choices first-letter first-line repeat-item repeat-index selection value'
         let values          = split(pseudo_classes . ' ' . pseudo_elements)
-      else
-        return []
       endif
     endif
-
-    let entered_value = matchstr(line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
 
     for m in values
       if m =~? '^' . entered_value
@@ -614,10 +533,9 @@ function! csscomplete#CompleteCSS(findstart, base)
       endif
     endfor
 
-    return result1 + result2
-  elseif last_symbol == s:SYMBOLS.CLOSE_BRACE.NAME
-    return []
-  elseif last_symbol == s:SYMBOLS.BANG.NAME
+    let result = result1 + result2
+  elseif last_symbol == s:SYMBOLS.CLOSE_BRACE
+  elseif last_symbol == s:SYMBOLS.BANG
     let entered_important = matchstr(line, '.\{-}!\s*\zs[a-zA-Z ]*$')
     let values            = ['important']
 
@@ -627,8 +545,8 @@ function! csscomplete#CompleteCSS(findstart, base)
       endif
     endfor
 
-    return result1
-  elseif last_symbol == s:SYMBOLS.AMPERSAND.NAME
+    let result = result1
+  elseif last_symbol == s:SYMBOLS.AMPERSAND
     let after_at = matchstr(line, '.*@\zs.*')
 
     if after_at =~ '\s'
@@ -651,8 +569,6 @@ function! csscomplete#CompleteCSS(findstart, base)
         else
           let values    = ['"', 'url(']
         endif
-      else
-        return []
       endif
 
       for m in values
@@ -663,7 +579,7 @@ function! csscomplete#CompleteCSS(findstart, base)
         endif
       endfor
 
-      return result1 + result2
+      let result = result1 + result2
     else
       let values = split('charset page media import font-face')
       let atrule = matchstr(line, '.*@\zs[a-zA-Z-]*$')
@@ -676,9 +592,9 @@ function! csscomplete#CompleteCSS(findstart, base)
         endif
       endfor
 
-      return result1 + result2
+      let result = result1 + result2
     endif
   endif
 
-  return []
+  return result
 endfunction
