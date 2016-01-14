@@ -543,6 +543,7 @@ function! csscomplete#completeValue(line, properties_values)
   let entered_value     = matchstr(a:line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
   let property          = tolower(matchstr(a:line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
   let is_multi_property = '^\%('. join(keys(a:properties_values), '\|') .'\)'
+  let values            = []
 
   if property =~ is_multi_property
     let prefix = csscomplete#getPropertyPrefix(property)
