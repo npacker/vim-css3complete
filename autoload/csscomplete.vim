@@ -197,260 +197,270 @@ let s:PSEUDO_ELEMENTS = [
   \'value',
 \]
 
+" Values shared my multiple properties
+let s:COMMON_VALUES = {
+  \'color':           split('transparent # rgb( rgba( hsl('),
+  \'line-style':      split('none hidden dotted dashed solid double groove ridge inset outset'),
+  \'line-width':      split('thin thick medium'),
+  \'timing-function': split('ease ease-in ease-out ease-in-out linear cubic-bezier( step-start step-stop steps('),
+  \'url':             split('url( none'),
+\}
+
 function! csscomplete#backgroundPosition()
-  let result = []
+  let l:result = []
 
-  let vertical   = split('top center bottom')
-  let horizontal = split('left center right')
-  let vals       = matchstr(s:line, '.*:\s*\zs.*')
+  let l:vertical   = split('top center bottom')
+  let l:horizontal = split('left center right')
+  let l:vals       = matchstr(s:line, '.*:\s*\zs.*')
 
-  if vals =~ '^\%([a-zA-Z]\+\)\?$'
-    let result = horizontal
-  elseif vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
-    let result = vertical
+  if l:vals =~ '^\%([a-zA-Z]\+\)\?$'
+    let result = l:horizontal
+  elseif l:vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
+    let result = l:vertical
   else
-    let result = horizontal + vertical
+    let result = l:horizontal + l:vertical
   endif
 
-  return result
+  return l:result
 endfunction
 
 function! csscomplete#collectPropertyValues(property)
-  let result = []
-  let values = a:property.VALUES
-
-  for key in keys(values)
-    let result += values[key]
-  endfor
-
-  return result
+  return values(a:property.VALUES)
 endfunction
 
-function! csscomplete#getPropertyPrefix(property_name)
-  return get(split(a:property_name, '-'), 0)
+function! csscomplete#getPropertyPrefix(property)
+  return get(split(a:property, '-'), 0, a:property)
 endfunction
 
-function! csscomplete#buildPropertySuffixes(property_name, suffixes, ...)
-  let list = [a:property_name]
+function! csscomplete#buildPropertySuffixes(prefix, suffixes, ...)
+  let l:list = [a:prefix]
 
   for suffix in a:suffixes
-    let list += [a:property_name . '-' . suffix]
+    let l:list += [a:prefix . '-' . suffix]
   endfor
 
-  return join(list)
+  return join(l:list)
 endfunction
 
 function! csscomplete#buildPropertiesValues()
-  let props = {}
-
-  let common_values = {
-    \'color':           split('transparent # rgb( rgba( hsl('),
-    \'line-style':      split('none hidden dotted dashed solid double groove ridge inset outset'),
-    \'line-width':      split('thin thick medium'),
-    \'timing-function': split('ease ease-in ease-out ease-in-out linear cubic-bezier( step-start step-stop steps('),
-    \'url':             split('url( none'),
-  \}
+  let properties = {}
 
   " ANIMATION
-  let prop_name = 'animation'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('delay direction duration fill-mode iteration-count name play-state timing-function')),
+  let prefix = 'animation'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('delay direction duration fill-mode iteration-count name play-state timing-function')),
     \'VALUES': {
-      \prop_name.'-direction':       split('alternate alternate-reverse normal reverse'),
-      \prop_name.'-iteration-count': split('infinite'),
-      \prop_name.'-name':            split('none'),
-      \prop_name.'-timing-function': common_values['timing-function']
+      \prefix.'-direction':       split('alternate alternate-reverse normal reverse'),
+      \prefix.'-iteration-count': split('infinite'),
+      \prefix.'-name':            split('none'),
+      \prefix.'-timing-function': s:COMMON_VALUES['timing-function'],
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " ALIGN
-  let prop_name = 'align'
-  let props[prop_name] = {
+  let prefix = 'align'
+  let properties[prefix] = {
     \'KEYWORDS': 'align-items align-self',
     \'VALUES': {
-       \prop_name.'-items': split('flex-start flex-end center baseline strech')
+       \prefix.'-items': split('flex-start flex-end center baseline strech'),
     \}
   \}
-  let props[prop_name].VALUES['align-self'] = ['auto'] + props[prop_name].VALUES['align-items']
+  let properties[prefix].VALUES['align-self'] = ['auto'] + properties[prefix].VALUES['align-items']
 
   " TRANSITION
-  let prop_name = 'transition'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('delay duration property timing-function')),
+  let prefix = 'transition'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('delay duration prefix timing-function')),
     \'VALUES': {
-      \prop_name.'-property':        split('all none color background-color'),
-      \prop_name.'-timing-function': common_values['timing-function']
+      \prefix.'-prefix':        split('all none color background-color'),
+      \prefix.'-timing-function': s:COMMON_VALUES['timing-function'],
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
-
-  " COLOR
-  let prop_name = 'color'
-  let props[prop_name] = {
-    \'KEYWORDS': 'color',
-    \'VALUES':   common_values[prop_name]
-  \}
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " BACKGROUND
-  let prop_name = 'background'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('attachment clip color image origin position repeat size')),
+  let prefix = 'background'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('attachment clip color image origin position repeat size')),
     \'VALUES': {
-      \prop_name.'-attachment': split('scroll fixed'),
-      \prop_name.'-clip':       split('border-box content-box padding-box inherit'),
-      \prop_name.'-color':      common_values['color'],
-      \prop_name.'-image':      common_values['url'],
-      \prop_name.'-origin':     split('border-box content-box padding-box inherit'),
-      \prop_name.'-repeat':     split('repeat repeat-x repeat-y no-repeat'),
-      \prop_name.'-size':       split('auto cover contain'),
-      \prop_name.'-position':   csscomplete#backgroundPosition()
+      \prefix.'-attachment': split('scroll fixed'),
+      \prefix.'-clip':       split('border-box content-box padding-box inherit'),
+      \prefix.'-color':      s:COMMON_VALUES['color'],
+      \prefix.'-image':      s:COMMON_VALUES['url'],
+      \prefix.'-origin':     split('border-box content-box padding-box inherit'),
+      \prefix.'-position':   csscomplete#backgroundPosition(),
+      \prefix.'-repeat':     split('repeat repeat-x repeat-y no-repeat'),
+      \prefix.'-size':       split('auto cover contain'),
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " COLUMN
-  let props.column = {
+  let properties.column = {
     \'KEYWORDS': 'columns column-count column-fill column-gap column-span column-with',
-    \'VALUES': {
-    \}
+    \'VALUES': {}
   \}
+
+  for key in split(properties[prefix].KEYWORDS)
+    let properties[prefix].VALUES[key] = []
+  endfor
+
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " COLUMN-RULE
-  let prop_name = 'column-rule'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('color style width')),
+  let prefix = 'column-rule'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('color style width')),
     \'VALUES': {
-      \prop_name.'-color': common_values['color'],
-      \prop_name.'-style': common_values['line-style'],
-      \prop_name.'-width': common_values['line-width']
+      \prefix.'-color': s:COMMON_VALUES['color'],
+      \prefix.'-style': s:COMMON_VALUES['line-style'],
+      \prefix.'-width': s:COMMON_VALUES['line-width'],
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " OUTLINE
-  let prop_name = 'outline'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('color offset style width')),
+  let prefix = 'outline'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('color offset style width')),
     \'VALUES': {
-      \prop_name.'-color': common_values['color'],
-      \prop_name.'-style': common_values['line-style'],
-      \prop_name.'-width': common_values['line-width']
+      \prefix.'-color': s:COMMON_VALUES['color'],
+      \prefix.'-style': s:COMMON_VALUES['line-style'],
+      \prefix.'-width': s:COMMON_VALUES['line-width'],
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " FONT
-  let prop_name = 'font'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('face family size size-adjust stretch style variant weight')),
+  let prefix = 'font'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('face family size size-adjust stretch style variant weight')),
     \'VALUES': {
-      \prop_name.'-family':  split('sans-serif serif monospace cursive fantasy'),
-      \prop_name.'-size':    split('xx-small x-small small medium large x-large xx-large larger smaller'),
-      \prop_name.'-style':   split('normal italic oblique'),
-      \prop_name.'-variant': split('normal small-caps'),
-      \prop_name.'-weight':  split('normal bold bolder lighter 100 200 300 400 500 600 700 800 900')
+      \prefix.'-family':  split('sans-serif serif monospace cursive fantasy'),
+      \prefix.'-size':    split('xx-small x-small small medium large x-large xx-large larger smaller'),
+      \prefix.'-style':   split('normal italic oblique'),
+      \prefix.'-variant': split('normal small-caps'),
+      \prefix.'-weight':  split('normal bold bolder lighter 100 200 300 400 500 600 700 800 900'),
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " TEXT
-  let prop_name = 'text'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('align decoration indent overflow rendering shadow transform'), 1),
+  let prefix = 'text'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('align decoration indent overflow rendering shadow transform'), 1),
     \'VALUES': {
-      \prop_name.'-align':      split('left right center justify'),
-      \prop_name.'-decoration': split('none underline overline line-through blink'),
-      \prop_name.'-shadow':     common_values['color'],
-      \prop_name.'-transform':  split('capitalize uppercase lowercase none')
+      \prefix.'-align':      split('left right center justify'),
+      \prefix.'-decoration': split('none underline overline line-through blink'),
+      \prefix.'-shadow':     s:COMMON_VALUES['color'],
+      \prefix.'-transform':  split('capitalize uppercase lowercase none'),
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " LIST-STYLE
-  let prop_name = 'list-style'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('image position type'), 1),
+  let prefix = 'list-style'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('image position type'), 1),
     \'VALUES': {
-      \prop_name.'-image':    common_values['url'],
-      \prop_name.'-position': split('inside outside'),
-      \prop_name.'-type':     split('disc circle square decimal decimal-leading-zero lower-roman upper-roman lower-latin upper-latin none')
+      \prefix.'-image':    s:COMMON_VALUES['url'],
+      \prefix.'-position': split('inside outside'),
+      \prefix.'-type':     split('disc circle square decimal decimal-leading-zero lower-roman upper-roman lower-latin upper-latin none'),
     \}
   \}
-  let props[prop_name].VALUES[prop_name] = csscomplete#collectPropertyValues(props[prop_name])
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " BORDER
-  let prop_name = 'border'
+  let prefix = 'border'
 
-  let borders  =       csscomplete#buildPropertySuffixes(prop_name,           split('bottom collapse color left radius right bottom-left-radius bottom-right-radius top top-left-radius top-right-radius spacing style width'))
-  let borders .= ' ' . csscomplete#buildPropertySuffixes(prop_name.'-bottom', split('color style width'), 1)
-  let borders .= ' ' . csscomplete#buildPropertySuffixes(prop_name.'-left',   split('color style width'), 1)
-  let borders .= ' ' . csscomplete#buildPropertySuffixes(prop_name.'-right',  split('color style width'), 1)
-  let borders .= ' ' . csscomplete#buildPropertySuffixes(prop_name.'-top',    split('color style width'), 1)
+  let borders  = csscomplete#buildPropertySuffixes(prefix,           split('bottom collapse color left radius right spacing style top width'))
+  let borders .= ' '
+  let borders .= csscomplete#buildPropertySuffixes(prefix.'-bottom', split('color left-radius right-radius style width'), 1)
+  let borders .= ' '
+  let borders .= csscomplete#buildPropertySuffixes(prefix.'-left',   split('color style width'), 1)
+  let borders .= ' '
+  let borders .= csscomplete#buildPropertySuffixes(prefix.'-right',  split('color style width'), 1)
+  let borders .= ' '
+  let borders .= csscomplete#buildPropertySuffixes(prefix.'-top',    split('color left-radius right-radius style width'), 1)
 
-  let props[prop_name] = {
+  let properties[prefix] = {
     \'KEYWORDS': borders,
-    \'VALUES': {
-    \}
+    \'VALUES': {}
   \}
 
-  for key in split(props[prop_name].KEYWORDS)
+  for key in split(properties[prefix].KEYWORDS)
     if key =~ '-color$'
-      let props[prop_name].VALUES[key] = common_values['color']
+      let properties[prefix].VALUES[key] = s:COMMON_VALUES['color']
     elseif key =~ '-style$'
-      let props[prop_name].VALUES[key] = common_values['line-style']
+      let properties[prefix].VALUES[key] = s:COMMON_VALUES['line-style']
     elseif key =~ '-width$'
-      let props[prop_name].VALUES[key] = common_values['line-width']
+      let properties[prefix].VALUES[key] = s:COMMON_VALUES['line-width']
     elseif key =~ '-collapse'
-      let props[prop_name].VALUES[key] = split('separate collapse')
+      let properties[prefix].VALUES[key] = split('separate collapse')
     else
-      let props[prop_name].VALUES[key] = common_values['color'] + common_values['line-style'] + common_values['line-width'] + split('separate collapse')
+      let properties[prefix].values[key] = []
     endif
   endfor
 
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
+
   " MARGIN
-  let prop_name = 'margin'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('top right bottom left')),
-    \'VALUES': {
-    \}
+  let prefix = 'margin'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
+    \'VALUES': {}
   \}
+
+  for key in split(properties[prefix].KEYWORDS)
+    let properties[prefix].VALUES[key] = []
+  endfor
+
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " PADDING
-  let prop_name = 'padding'
-  let props[prop_name] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prop_name, split('top right bottom left')),
-    \'VALUES': {
-    \}
+  let prefix = 'padding'
+  let properties[prefix] = {
+    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
+    \'VALUES': {}
   \}
 
-  let props.KEYWORDS = split(
-    \'  align-items '
-    \.  props.animation.KEYWORDS
+  for key in split(properties[prefix].KEYWORDS)
+    let properties[prefix].VALUES[key] = []
+  endfor
+
+  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
+
+  " Assemble property keywords
+  let properties.KEYWORDS = split(
+    \ ' align-items '
+    \.  properties.animation.KEYWORDS
     \.' azimuth backface-visibility '
-    \.  props.background.KEYWORDS.' '
-    \.  props.border.KEYWORDS
-    \.' bottom box-shadow box-sizing caption-side clear clip clip-path '
-    \.  props.color.KEYWORDS.' '
-    \.  props.column.KEYWORDS.' '
-    \.  props['column-rule'].KEYWORDS
+    \.  properties.background.KEYWORDS
+    \.' '
+    \.  properties.border.KEYWORDS
+    \.' bottom box-shadow box-sizing caption-side clear clip clip-path color '
+    \.  properties.column.KEYWORDS
+    \.' '
+    \.  properties['column-rule'].KEYWORDS
     \.' content counter-increment counter-reset cue cue-after cue-before cursor direction display elevation empty-cells filter float '
-    \.  props.font.KEYWORDS
+    \.  properties.font.KEYWORDS
     \.' height image-rendering ime-mode left letter-spacing line-height '
-    \.  props['list-style'].KEYWORDS.' '
-    \.  props.margin.KEYWORDS
+    \.  properties['list-style'].KEYWORDS
+    \.' '
+    \.  properties.margin.KEYWORDS
     \.' marker-offset marks mask max-height max-width min-height min-width opacity orient orphans '
-    \.  props.outline.KEYWORDS
+    \.  properties.outline.KEYWORDS
     \.' overflow overflow-x overflow-y '
-    \.  props.padding.KEYWORDS
+    \.  properties.padding.KEYWORDS
     \.' page-break-after page-break-before page-break-inside pause pause-after pause-before pitch pitch-range play-during pointer-events position quotes resize right richness speak speak-header speak-numeral speak-punctuation speech-rate stress table-layout '
-    \.  props.text.KEYWORDS
+    \.  properties.text.KEYWORDS
     \.' top transform transform-origin '
-    \.  props.transition.KEYWORDS
-    \.' unicode-bidi vertical-align visibility voice-family volume white-space widows width word-spacing word-wrap z-index'
+    \.  properties.transition.KEYWORDS
+    \.' unicode-bidi vertical-align visibility voice-family volume white-space widows width word-spacing word-wrap z-index '
   \)
 
-  return props
+  return properties
 endfunction
 
 function! csscomplete#buildResult(entered, values)
@@ -458,11 +468,11 @@ function! csscomplete#buildResult(entered, values)
   let result2 = []
 
   for value in a:values
-      if value =~? '^' . a:entered
-        call add(result1, value)
-      elseif value =~? a:entered
-        call add(result2, value)
-      endif
+    if value =~? '^' . a:entered
+      call add(result1, value)
+    elseif value =~? a:entered
+      call add(result2, value)
+    endif
   endfor
 
   return result1 + result2
@@ -470,16 +480,16 @@ endfunction
 
 function! csscomplete#findStart()
   let s:line         = getline('.')
-  let start          = col('.') - 1
+  let l:start        = col('.') - 1
   let complete_begin = col('.') - 2
 
-  while start >= 0 && s:line[start - 1] =~ '\%(\k\|-\)'
-    let start -= 1
+  while l:start >= 0 && s:line[l:start - 1] =~ '\%(\k\|-\)'
+    let l:start -= 1
   endwhile
 
   let b:context = s:line[0:complete_begin]
 
-  return start
+  return l:start
 endfunction
 
 function csscomplete#getLastSymbol(line)
@@ -540,12 +550,13 @@ function! csscomplete#completeProperty(line, properties_values)
 endfunction
 
 function! csscomplete#completeValue(line, properties_values)
+  let values            = []
+
   let entered_value     = matchstr(a:line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
   let property          = tolower(matchstr(a:line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
   let is_multi_property = '^\%('. join(keys(a:properties_values), '\|') .'\)'
-  let values            = []
 
-  if property =~ is_multi_property
+  if property =~? is_multi_property
     let prefix = csscomplete#getPropertyPrefix(property)
     let values = a:properties_values[prefix].VALUES[property]
   elseif property == 'azimuth'
@@ -563,7 +574,7 @@ function! csscomplete#completeValue(line, properties_values)
   elseif property == 'clip-path'
     let values = ['none']
   elseif property == 'color'
-    let values = a:properties_values.color.VALUES
+    let values = s:COMMON_VALUES['color']
   elseif property == 'content'
     let values = split('normal attr( open-quote close-quote no-open-quote no-close-quote')
   elseif property =~ 'counter-\%(increment\|reset\)$'
@@ -641,7 +652,7 @@ function! csscomplete#completeValue(line, properties_values)
   elseif property == 'z-index'
     let values = ['auto']
   else
-    let element = tolower(matchstr(s:line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
+    let element = tolower(matchstr(a:line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
 
     if index(s:TAGS, element) > -1
       let values = s:PSEUDO_CLASSES + s:PSEUDO_ELEMENTS
@@ -701,16 +712,15 @@ function! csscomplete#CompleteCSS(findstart, base)
 
   " There are few chars important for context:
   " ^ ; : { } /* */
-  " Where ^ is start of line and /* */ are comment borders
-  " Depending on their relative position to cursor we will know what should
-  " be completed.
-  " 1. if nearest are ^ or { or ; current word is property
-  " 2. if : it is value (with exception of pseudo things)
-  " 3. if } we are outside of css definitions
-  " 4. for comments ignoring is be the easiest but assume they are the same
-  "   as 1.
-  " 5. if @ complete at-rule
-  " 6. if ! complete important
+  " Where ^ is start of line and /* */ are comment delimiters.
+  "
+  " Their relative position to the cursor will determine the completion type.
+  "
+  " If the last symbol in the line is:
+  " 1. ^ { ; /* style= complete a property
+  " 2. : complete a value (with the exception of pseudo-classes)
+  " 3. ! complete important
+  " 4. @ complete an at-rule
   if exists("b:context")
     let s:line = b:context
     unlet! b:context
@@ -723,7 +733,7 @@ function! csscomplete#CompleteCSS(findstart, base)
   let properties_values = csscomplete#buildPropertiesValues()
   let result            = []
 
-  if empty(last_symbol) || last_symbol =~ '^\%(' . join([s:SYMBOLS.OPEN_BRACE, s:SYMBOLS.SEMI_COLON, s:SYMBOLS.OPEN_COMMENT, s:SYMBOLS.CLOSE_COMMENT, s:SYMBOLS.STYLE], '\|') . '\)$'
+  if empty(last_symbol) || last_symbol =~? '^\%(' . join([s:SYMBOLS.OPEN_BRACE, s:SYMBOLS.SEMI_COLON, s:SYMBOLS.OPEN_COMMENT, s:SYMBOLS.STYLE], '\|') . '\)$'
     let result = csscomplete#completeProperty(line, properties_values)
   elseif last_symbol == s:SYMBOLS.COLON
     let result = csscomplete#completeValue(line, properties_values)
