@@ -207,25 +207,33 @@ let s:COMMON_VALUES = {
 \}
 
 function! csscomplete#backgroundPosition()
-  let l:result = []
+  let result = []
 
-  let l:vertical   = split('top center bottom')
-  let l:horizontal = split('left center right')
-  let l:vals       = matchstr(s:line, '.*:\s*\zs.*')
+  let vertical   = split('top center bottom')
+  let horizontal = split('left center right')
+  let vals       = matchstr(s:line, '.*:\s*\zs.*')
 
-  if l:vals =~ '^\%([a-zA-Z]\+\)\?$'
-    let result = l:horizontal
-  elseif l:vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
-    let result = l:vertical
+  if vals =~ '^\%([a-zA-Z]\+\)\?$'
+    let result = horizontal
+  elseif vals =~ '^[a-zA-Z]\+\s\+\%([a-zA-Z]\+\)\?$'
+    let result = vertical
   else
-    let result = l:horizontal + l:vertical
+    let result = horizontal + vertical
   endif
 
-  return l:result
+  return result
 endfunction
 
 function! csscomplete#collectPropertyValues(property)
-  return values(a:property.VALUES)
+  let result = []
+
+  let values = values(a:property.VALUES)
+
+  for value in values
+    let result += value
+  endfor
+
+  return result
 endfunction
 
 function! csscomplete#getPropertyPrefix(property)
@@ -233,13 +241,13 @@ function! csscomplete#getPropertyPrefix(property)
 endfunction
 
 function! csscomplete#buildPropertySuffixes(prefix, suffixes, ...)
-  let l:list = [a:prefix]
+  let list = [a:prefix]
 
   for suffix in a:suffixes
-    let l:list += [a:prefix . '-' . suffix]
+    let list += [a:prefix . '-' . suffix]
   endfor
 
-  return join(l:list)
+  return join(list)
 endfunction
 
 function! csscomplete#buildPropertiesValues()
@@ -248,7 +256,7 @@ function! csscomplete#buildPropertiesValues()
   " ANIMATION
   let prefix = 'animation'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('delay direction duration fill-mode iteration-count name play-state timing-function')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('delay direction duration fill-mode iteration-count name play-state timing-function')),
     \'VALUES': {
       \prefix.'-direction':       split('alternate alternate-reverse normal reverse'),
       \prefix.'-iteration-count': split('infinite'),
@@ -261,7 +269,7 @@ function! csscomplete#buildPropertiesValues()
   " ALIGN
   let prefix = 'align'
   let properties[prefix] = {
-    \'KEYWORDS': 'align-items align-self',
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('items self')),
     \'VALUES': {
        \prefix.'-items': split('flex-start flex-end center baseline strech'),
     \}
@@ -271,7 +279,7 @@ function! csscomplete#buildPropertiesValues()
   " TRANSITION
   let prefix = 'transition'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('delay duration prefix timing-function')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('delay duration prefix timing-function')),
     \'VALUES': {
       \prefix.'-prefix':        split('all none color background-color'),
       \prefix.'-timing-function': s:COMMON_VALUES['timing-function'],
@@ -282,7 +290,7 @@ function! csscomplete#buildPropertiesValues()
   " BACKGROUND
   let prefix = 'background'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('attachment clip color image origin position repeat size')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('attachment clip color image origin position repeat size')),
     \'VALUES': {
       \prefix.'-attachment': split('scroll fixed'),
       \prefix.'-clip':       split('border-box content-box padding-box inherit'),
@@ -297,12 +305,13 @@ function! csscomplete#buildPropertiesValues()
   let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " COLUMN
-  let properties.column = {
-    \'KEYWORDS': 'columns column-count column-fill column-gap column-span column-with',
+  let prefix = 'column'
+  let properties[prefix] = {
+    \'PROPERTIES': 'columns ' . csscomplete#buildPropertySuffixes(prefix, split('count fill gap span with')),
     \'VALUES': {}
   \}
 
-  for key in split(properties[prefix].KEYWORDS)
+  for key in split(properties[prefix].PROPERTIES)
     let properties[prefix].VALUES[key] = []
   endfor
 
@@ -311,7 +320,7 @@ function! csscomplete#buildPropertiesValues()
   " COLUMN-RULE
   let prefix = 'column-rule'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('color style width')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('color style width')),
     \'VALUES': {
       \prefix.'-color': s:COMMON_VALUES['color'],
       \prefix.'-style': s:COMMON_VALUES['line-style'],
@@ -323,7 +332,7 @@ function! csscomplete#buildPropertiesValues()
   " OUTLINE
   let prefix = 'outline'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('color offset style width')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('color offset style width')),
     \'VALUES': {
       \prefix.'-color': s:COMMON_VALUES['color'],
       \prefix.'-style': s:COMMON_VALUES['line-style'],
@@ -335,7 +344,7 @@ function! csscomplete#buildPropertiesValues()
   " FONT
   let prefix = 'font'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('face family size size-adjust stretch style variant weight')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('family size size-adjust stretch style variant weight')),
     \'VALUES': {
       \prefix.'-family':  split('sans-serif serif monospace cursive fantasy'),
       \prefix.'-size':    split('xx-small x-small small medium large x-large xx-large larger smaller'),
@@ -349,7 +358,7 @@ function! csscomplete#buildPropertiesValues()
   " TEXT
   let prefix = 'text'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('align decoration indent overflow rendering shadow transform'), 1),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('align decoration indent overflow rendering shadow transform'), 1),
     \'VALUES': {
       \prefix.'-align':      split('left right center justify'),
       \prefix.'-decoration': split('none underline overline line-through blink'),
@@ -362,7 +371,7 @@ function! csscomplete#buildPropertiesValues()
   " LIST-STYLE
   let prefix = 'list-style'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('image position type'), 1),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('image position type'), 1),
     \'VALUES': {
       \prefix.'-image':    s:COMMON_VALUES['url'],
       \prefix.'-position': split('inside outside'),
@@ -385,11 +394,11 @@ function! csscomplete#buildPropertiesValues()
   let borders .= csscomplete#buildPropertySuffixes(prefix.'-top',    split('color left-radius right-radius style width'), 1)
 
   let properties[prefix] = {
-    \'KEYWORDS': borders,
+    \'PROPERTIES': borders,
     \'VALUES': {}
   \}
 
-  for key in split(properties[prefix].KEYWORDS)
+  for key in split(properties[prefix].PROPERTIES)
     if key =~ '-color$'
       let properties[prefix].VALUES[key] = s:COMMON_VALUES['color']
     elseif key =~ '-style$'
@@ -408,11 +417,11 @@ function! csscomplete#buildPropertiesValues()
   " MARGIN
   let prefix = 'margin'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
     \'VALUES': {}
   \}
 
-  for key in split(properties[prefix].KEYWORDS)
+  for key in split(properties[prefix].PROPERTIES)
     let properties[prefix].VALUES[key] = []
   endfor
 
@@ -421,42 +430,42 @@ function! csscomplete#buildPropertiesValues()
   " PADDING
   let prefix = 'padding'
   let properties[prefix] = {
-    \'KEYWORDS': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
+    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('top right bottom left')),
     \'VALUES': {}
   \}
 
-  for key in split(properties[prefix].KEYWORDS)
+  for key in split(properties[prefix].PROPERTIES)
     let properties[prefix].VALUES[key] = []
   endfor
 
   let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
 
   " Assemble property keywords
-  let properties.KEYWORDS = split(
+  let properties.PROPERTIES = split(
     \ ' align-items '
-    \.  properties.animation.KEYWORDS
+    \.  properties.animation.PROPERTIES
     \.' azimuth backface-visibility '
-    \.  properties.background.KEYWORDS
+    \.  properties.background.PROPERTIES
     \.' '
-    \.  properties.border.KEYWORDS
+    \.  properties.border.PROPERTIES
     \.' bottom box-shadow box-sizing caption-side clear clip clip-path color '
-    \.  properties.column.KEYWORDS
+    \.  properties.column.PROPERTIES
     \.' '
-    \.  properties['column-rule'].KEYWORDS
+    \.  properties['column-rule'].PROPERTIES
     \.' content counter-increment counter-reset cue cue-after cue-before cursor direction display elevation empty-cells filter float '
-    \.  properties.font.KEYWORDS
+    \.  properties.font.PROPERTIES
     \.' height image-rendering ime-mode left letter-spacing line-height '
-    \.  properties['list-style'].KEYWORDS
+    \.  properties['list-style'].PROPERTIES
     \.' '
-    \.  properties.margin.KEYWORDS
+    \.  properties.margin.PROPERTIES
     \.' marker-offset marks mask max-height max-width min-height min-width opacity orient orphans '
-    \.  properties.outline.KEYWORDS
+    \.  properties.outline.PROPERTIES
     \.' overflow overflow-x overflow-y '
-    \.  properties.padding.KEYWORDS
+    \.  properties.padding.PROPERTIES
     \.' page-break-after page-break-before page-break-inside pause pause-after pause-before pitch pitch-range play-during pointer-events position quotes resize right richness speak speak-header speak-numeral speak-punctuation speech-rate stress table-layout '
-    \.  properties.text.KEYWORDS
+    \.  properties.text.PROPERTIES
     \.' top transform transform-origin '
-    \.  properties.transition.KEYWORDS
+    \.  properties.transition.PROPERTIES
     \.' unicode-bidi vertical-align visibility voice-family volume white-space widows width word-spacing word-wrap z-index '
   \)
 
@@ -480,30 +489,30 @@ endfunction
 
 function! csscomplete#findStart()
   let s:line         = getline('.')
-  let l:start        = col('.') - 1
+  let start        = col('.') - 1
   let complete_begin = col('.') - 2
 
-  while l:start >= 0 && s:line[l:start - 1] =~ '\%(\k\|-\)'
-    let l:start -= 1
+  while start >= 0 && s:line[start - 1] =~ '\%(\k\|-\)'
+    let start -= 1
   endwhile
 
   let b:context = s:line[0:complete_begin]
 
-  return l:start
+  return start
 endfunction
 
-function csscomplete#getLastSymbol(line)
+function csscomplete#getLastSymbol()
   let found      = {}
 
-  let openbrace  = strridx(a:line, s:SYMBOLS.OPEN_BRACE)
-  let closebrace = strridx(a:line, s:SYMBOLS.CLOSE_BRACE)
-  let colon      = strridx(a:line, s:SYMBOLS.COLON)
-  let semicolon  = strridx(a:line, s:SYMBOLS.SEMI_COLON)
-  let opencomm   = strridx(a:line, s:SYMBOLS.OPEN_COMMENT)
-  let closecomm  = strridx(a:line, s:SYMBOLS.CLOSE_COMMENT)
-  let style      = strridx(a:line, s:SYMBOLS.STYLE)
-  let ampersand  = strridx(a:line, s:SYMBOLS.AMPERSAND)
-  let bang       = strridx(a:line, s:SYMBOLS.BANG)
+  let openbrace  = strridx(s:line, s:SYMBOLS.OPEN_BRACE)
+  let closebrace = strridx(s:line, s:SYMBOLS.CLOSE_BRACE)
+  let colon      = strridx(s:line, s:SYMBOLS.COLON)
+  let semicolon  = strridx(s:line, s:SYMBOLS.SEMI_COLON)
+  let opencomm   = strridx(s:line, s:SYMBOLS.OPEN_COMMENT)
+  let closecomm  = strridx(s:line, s:SYMBOLS.CLOSE_COMMENT)
+  let style      = strridx(s:line, s:SYMBOLS.STYLE)
+  let ampersand  = strridx(s:line, s:SYMBOLS.AMPERSAND)
+  let bang       = strridx(s:line, s:SYMBOLS.BANG)
 
   if openbrace > -1
     let found[openbrace]  = s:SYMBOLS.OPEN_BRACE
@@ -522,7 +531,7 @@ function csscomplete#getLastSymbol(line)
   endif
 
   if opencomm > -1
-    let found[opencomm]   = s:SYMBOLS.OPEN_COMMNET
+    let found[opencomm]   = s:SYMBOLS.OPEN_COMMENT
   endif
 
   if closecomm > -1
@@ -544,19 +553,20 @@ function csscomplete#getLastSymbol(line)
   return get(found, max(keys(found)), '')
 endfunction
 
-function! csscomplete#completeProperty(line, properties_values)
-  let entered_property = matchstr(a:line, '.\{-}\zs[a-zA-Z-]*$')
-  return map(csscomplete#buildResult(entered_property, a:properties_values.KEYWORDS), 'v:val . ": "')
+function! csscomplete#completeProperty(properties_values)
+  let entered_property = matchstr(s:line, '.\{-}\zs[a-zA-Z-]*$')
+
+  return map(csscomplete#buildResult(entered_property, a:properties_values.PROPERTIES), 'v:val . ": "')
 endfunction
 
-function! csscomplete#completeValue(line, properties_values)
+function! csscomplete#completeValue(properties_values)
   let values            = []
 
-  let entered_value     = matchstr(a:line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
-  let property          = tolower(matchstr(a:line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
+  let entered_value     = matchstr(s:line, '.\{-}\zs[a-zA-Z0-9#,.(_-]*$')
+  let property          = tolower(matchstr(s:line, '\zs[a-zA-Z-]*\ze\s*:[^:]\{-}$'))
   let is_multi_property = '^\%('. join(keys(a:properties_values), '\|') .'\)'
 
-  if property =~? is_multi_property
+  if property =~ is_multi_property
     let prefix = csscomplete#getPropertyPrefix(property)
     let values = a:properties_values[prefix].VALUES[property]
   elseif property == 'azimuth'
@@ -608,7 +618,7 @@ function! csscomplete#completeValue(line, properties_values)
   elseif property == '^\%(max\|min\)-\%(height\|width\)$'
     let values = ['none']
   elseif property == 'overflow'
-    let values = split('visible hidden scroll auto')
+    let values = split('auto visible hidden scroll')
   elseif property =~ 'page-break-\%(after\|before\)$'
     let values = splitl('auto always avoid left right')
   elseif property == 'page-break-inside'
@@ -652,7 +662,7 @@ function! csscomplete#completeValue(line, properties_values)
   elseif property == 'z-index'
     let values = ['auto']
   else
-    let element = tolower(matchstr(a:line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
+    let element = tolower(matchstr(s:line, '\zs[a-zA-Z1-6]*\ze:\{1,2\}[^:[:space:]]\{-}$'))
 
     if index(s:TAGS, element) > -1
       let values = s:PSEUDO_CLASSES + s:PSEUDO_ELEMENTS
@@ -662,24 +672,25 @@ function! csscomplete#completeValue(line, properties_values)
   return csscomplete#buildResult(entered_value, values)
 endfunction
 
-function! csscomplete#completeBang(line)
-  let entered_important = matchstr(a:line, '.\{-}!\s*\zs[a-zA-Z ]*$')
+function! csscomplete#completeBang()
+  let entered_important = matchstr(s:line, '.\{-}!\s*\zs[a-zA-Z ]*$')
   let values            = ['important']
   return csscomplete#buildResult(entered_important, values)
 endfunction
 
-function! csscomplete#completeAtrule(line)
+function! csscomplete#completeAtrule()
   let result = []
-  let after_at = matchstr(a:line, '.*@\zs.*')
+
+  let after_at = matchstr(s:line, '.*@\zs.*')
 
   if after_at =~ '\s'
-    let atrule_name = matchstr(a:line, '.*@\zs[a-zA-Z-]\+\ze')
+    let atrule_name = matchstr(s:line, '.*@\zs[a-zA-Z-]\+\ze')
 
     if atrule_name == 'media'
-      let atrule_after = matchstr(a:line, '.*@media\s\+\zs.*$')
+      let atrule_after = matchstr(s:line, '.*@media\s\+\zs.*$')
       let values       = split('screen tty tv projection handheld print braille aural all')
     elseif atrule_name == 'import'
-      let atrule_after = matchstr(a:line, '.*@import\s\+\zs.*$')
+      let atrule_after = matchstr(s:line, '.*@import\s\+\zs.*$')
 
       if atrule_after =~ "^[\"']"
         let filestart = matchstr(atrule_after, '^.\zs.*')
@@ -697,7 +708,7 @@ function! csscomplete#completeAtrule(line)
     let result = csscomplete#buildResult(atrule_after, values)
   else
     let values = split('charset page media import font-face')
-    let atrule = matchstr(a:line, '.*@\zs[a-zA-Z-]*$')
+    let atrule = matchstr(s:line, '.*@\zs[a-zA-Z-]*$')
     " insert space
     let result = csscomplete#buildResult(atrule, values)
   endif
@@ -710,37 +721,30 @@ function! csscomplete#CompleteCSS(findstart, base)
     return csscomplete#findStart()
   endif
 
-  " There are few chars important for context:
-  " ^ ; : { } /* */
-  " Where ^ is start of line and /* */ are comment delimiters.
-  "
-  " Their relative position to the cursor will determine the completion type.
-  "
-  " If the last symbol in the line is:
-  " 1. ^ { ; /* style= complete a property
-  " 2. : complete a value (with the exception of pseudo-classes)
-  " 3. ! complete important
-  " 4. @ complete an at-rule
-  if exists("b:context")
+  if exists('b:context')
     let s:line = b:context
     unlet! b:context
   else
     let s:line = a:base
   endif
 
-  let line              = s:line
-  let last_symbol       = csscomplete#getLastSymbol(line)
-  let properties_values = csscomplete#buildPropertiesValues()
   let result            = []
 
-  if empty(last_symbol) || last_symbol =~? '^\%(' . join([s:SYMBOLS.OPEN_BRACE, s:SYMBOLS.SEMI_COLON, s:SYMBOLS.OPEN_COMMENT, s:SYMBOLS.STYLE], '\|') . '\)$'
-    let result = csscomplete#completeProperty(line, properties_values)
+  let last_symbol       = csscomplete#getLastSymbol()
+  let properties_values = csscomplete#buildPropertiesValues()
+
+  if empty(last_symbol) ||
+        \ last_symbol == s:SYMBOLS.OPEN_BRACE ||
+        \ last_symbol == s:SYMBOLS.SEMI_COLON ||
+        \ last_symbol == s:SYMBOLS.OPEN_COMMENT ||
+        \ last_symbol == s:SYMBOLS.STYLE
+    let result = csscomplete#completeProperty(properties_values)
   elseif last_symbol == s:SYMBOLS.COLON
-    let result = csscomplete#completeValue(line, properties_values)
+    let result = csscomplete#completeValue(properties_values)
   elseif last_symbol == s:SYMBOLS.BANG
-    let result = csscomplete#completeBang(line)
+    let result = csscomplete#completeBang()
   elseif last_symbol == s:SYMBOLS.AMPERSAND
-    let result = csscomplete#completeAtrule(line)
+    let result = csscomplete#completeAtrule()
   endif
 
   return result
