@@ -399,7 +399,7 @@ function! csscomplete#buildPropertiesValues()
     elseif key =~ '-collapse'
       let properties[prefix].VALUES[key] = split('separate collapse')
     else
-      let properties[prefix].values[key] = []
+      let properties[prefix].VALUES[key] = []
     endif
   endfor
 
