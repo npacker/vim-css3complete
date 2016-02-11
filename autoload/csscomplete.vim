@@ -373,10 +373,11 @@ function! csscomplete#buildPropertiesValues()
     \'VALUES': {
       \prefix.'-image':    s:COMMON_VALUES['url'],
       \prefix.'-position': split('inside outside'),
-      \prefix.'-type':     split('disc circle square decimal decimal-leading-zero lower-roman upper-roman lower-latin upper-latin none'),
+      \prefix.'-type':     split('disc circle square decimal decimal-leading-zero lower-greek lower-latin lower-roman upper-latin upper-roman cjk-ideographic georgian hebrew hiragana hiragana-iroha katakana katakana-iroha none'),
     \}
   \}
   let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
+  let properties['list'].VALUES         = properties[prefix].VALUES
 
   " BORDER
   let prefix = 'border'
