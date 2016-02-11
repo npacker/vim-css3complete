@@ -687,6 +687,7 @@ function! csscomplete#completeAtrule()
     if atrule_name == 'media'
       let atrule_after = matchstr(s:line, '.*@media\s\+\zs.*$')
       let values       = split('screen tty tv projection handheld print braille aural all')
+      let result       = csscomplete#buildResult(atrule_after, values)
     elseif atrule_name == 'import'
       let atrule_after = matchstr(s:line, '.*@import\s\+\zs.*$')
 
@@ -701,13 +702,12 @@ function! csscomplete#completeAtrule()
       else
         let values = split('" url(')
       endif
-    endif
 
-    let result = csscomplete#buildResult(atrule_after, values)
+      let result = csscomplete#buildResult(atrule_after, values)
+    endif
   else
     let values = split('charset page media import font-face')
     let atrule = matchstr(s:line, '.*@\zs[a-zA-Z-]*$')
-    " insert space
     let result = csscomplete#buildResult(atrule, values)
   endif
 
