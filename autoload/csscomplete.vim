@@ -487,16 +487,16 @@ endfunction
 
 function! csscomplete#findStart()
   let s:line         = getline('.')
-  let start        = col('.') - 1
+  let l:start        = col('.') - 1
   let complete_begin = col('.') - 2
 
-  while start >= 0 && s:line[start - 1] =~ '\%(\k\|-\)'
-    let start -= 1
+  while l:start >= 0 && s:line[l:start - 1] =~ '\%(\k\|-\)'
+    let l:start -= 1
   endwhile
 
   let b:context = s:line[0:complete_begin]
 
-  return start
+  return l:start
 endfunction
 
 function csscomplete#getLastSymbol()
