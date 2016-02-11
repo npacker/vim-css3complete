@@ -368,16 +368,16 @@ function! csscomplete#buildPropertiesValues()
 
   " LIST-STYLE
   let prefix = 'list-style'
-  let properties[prefix] = {
-    \'PROPERTIES': csscomplete#buildPropertySuffixes(prefix, split('image position type'), 1),
+  let property = 'list'
+  let properties[property] = {
+    \'PROPERTIES': prefix . ' ' . csscomplete#buildPropertySuffixes(prefix, split('image position type'), 1),
     \'VALUES': {
       \prefix.'-image':    s:COMMON_VALUES['url'],
       \prefix.'-position': split('inside outside'),
       \prefix.'-type':     split('disc circle square decimal decimal-leading-zero lower-greek lower-latin lower-roman upper-latin upper-roman cjk-ideographic georgian hebrew hiragana hiragana-iroha katakana katakana-iroha none'),
     \}
   \}
-  let properties[prefix].VALUES[prefix] = csscomplete#collectPropertyValues(properties[prefix])
-  let properties['list'].VALUES         = properties[prefix].VALUES
+  let properties[property].VALUES[prefix] = csscomplete#collectPropertyValues(properties[property])
 
   " BORDER
   let prefix = 'border'
@@ -454,7 +454,7 @@ function! csscomplete#buildPropertiesValues()
     \.' content counter-increment counter-reset cue cue-after cue-before cursor direction display elevation empty-cells filter float '
     \.  properties.font.PROPERTIES
     \.' height image-rendering ime-mode left letter-spacing line-height '
-    \.  properties['list-style'].PROPERTIES
+    \.  properties.list.PROPERTIES
     \.' '
     \.  properties.margin.PROPERTIES
     \.' marker-offset marks mask max-height max-width min-height min-width opacity orient orphans '
