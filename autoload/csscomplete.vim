@@ -4,9 +4,7 @@
 " Based on Christian Angermann's version
 "
 " Language: CSS 3
-" Version: 2.0
 " Maintainer: Nigel Packer
-" Last Change: 12 May 2015
 "
 
 " Constants
